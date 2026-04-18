@@ -1,0 +1,38 @@
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  PYTHON_VERSION: "3.9"
+
+build:
+  stage: build
+  image: python:${PYTHON_VERSION}-slim
+  script:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - echo "Build completed successfully"
+
+test:
+  stage: test
+  image: python:${PYTHON_VERSION}-slim
+  script:
+    - pip install pytest
+    - python -m pytest tests/ -v
+  needs:
+    - build
+
+deploy_production:
+  stage: deploy
+  image: python:${PYTHON_VERSION}-slim
+  script:
+    - echo "Deploying to production..."
+    # 部署命令
+  environment:
+    name: production
+  only:
+    - main
+  needs:
+    - test

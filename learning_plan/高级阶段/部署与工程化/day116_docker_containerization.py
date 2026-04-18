@@ -1,153 +1,263 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# 第116天：Docker容器化
+
 """
-第116天：Docker和容器化
-部署与工程化学习示例
-内容：Docker的基本概念、容器化部署和Docker Compose
+Docker容器化学习示例
+
+今天的学习内容：
+1. Docker基础概念
+2. Dockerfile编写
+3. Docker Compose配置
+4. 多阶段构建
+5. 容器化AI模型服务
+6. 容器管理与优化
 """
 
-print("=== 第116天：Docker和容器化 ===")
+import os
+import subprocess
 
-# 1. Docker基本概念
-print("\n1. Docker基本概念")
+# 1. Docker基础概念
+def docker_basics():
+    """Docker基础概念介绍"""
+    print("=== Docker基础概念 ===")
+    print("Docker是一个开源的容器化平台，用于构建、部署和运行应用程序")
+    print("核心概念：")
+    print("- 镜像(Image)：应用程序的只读模板")
+    print("- 容器(Container)：镜像的运行实例")
+    print("- 仓库(Repository)：存储镜像的地方")
+    print("- 网络(Network)：容器间通信的方式")
+    print("- 卷(Volume)：持久化存储数据")
 
-print("Docker是一个开源的容器化平台")
-print("- 容器：轻量级的隔离环境")
-print("- 镜像：容器的模板")
-print("- 仓库：存储镜像的地方")
-print("- Dockerfile：构建镜像的脚本")
-print("- Docker Compose：定义和运行多容器应用")
+# 2. Dockerfile编写示例
+def create_dockerfile():
+    """创建Dockerfile示例"""
+    print("\n=== Dockerfile编写 ===")
+    dockerfile_content = '''
+# 使用官方Python镜像作为基础
+FROM python:3.9-slim
 
-# 2. Docker安装
-print("\n2. Docker安装")
+# 设置工作目录
+WORKDIR /app
 
-print("Docker安装步骤:")
-print("1. 访问Docker官网 (https://www.docker.com/)")
-print("2. 下载适合你操作系统的Docker安装包")
-print("3. 安装Docker")
-print("4. 验证安装：docker --version")
+# 复制依赖文件
+COPY requirements.txt .
 
-# 3. Docker命令
-print("\n3. Docker命令")
+# 安装依赖
+RUN pip install --no-cache-dir -r requirements.txt
 
-print("常用Docker命令:")
-print("- docker --version：查看Docker版本")
-print("- docker info：查看Docker信息")
-print("- docker pull [image]：拉取镜像")
-print("- docker run [image]：运行容器")
-print("- docker ps：查看运行中的容器")
-print("- docker ps -a：查看所有容器")
-print("- docker stop [container]：停止容器")
-print("- docker rm [container]：删除容器")
-print("- docker rmi [image]：删除镜像")
-print("- docker build -t [name] .：构建镜像")
+# 复制应用代码
+COPY . .
 
-# 4. Dockerfile
-print("\n4. Dockerfile")
+# 暴露端口
+EXPOSE 8000
 
-print("Dockerfile是构建Docker镜像的脚本")
+# 运行应用
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+'''
+    
+    # 写入Dockerfile
+    with open('Dockerfile', 'w', encoding='utf-8') as f:
+        f.write(dockerfile_content)
+    
+    print("创建了Dockerfile文件")
+    print("Dockerfile内容：")
+    print(dockerfile_content)
 
-# 示例：Dockerfile
-print("\nDockerfile示例:")
-print("# 使用官方Python镜像作为基础镜像")
-print("FROM python:3.9-slim")
-print("")
-print("# 设置工作目录")
-print("WORKDIR /app")
-print("")
-print("# 复制依赖文件")
-print("COPY requirements.txt .")
-print("")
-print("# 安装依赖")
-print("RUN pip install --no-cache-dir -r requirements.txt")
-print("")
-print("# 复制应用代码")
-print("COPY . .")
-print("")
-print("# 暴露端口")
-print("EXPOSE 5000")
-print("")
-print("# 运行应用")
-print("CMD [\"python\", \"app.py\"]")
+# 3. 创建requirements.txt文件
+def create_requirements():
+    """创建requirements.txt文件"""
+    requirements_content = '''
+fastapi
+uvicorn
+scikit-learn
+pandas
+numpy
+'''
+    
+    with open('requirements.txt', 'w', encoding='utf-8') as f:
+        f.write(requirements_content)
+    
+    print("\n创建了requirements.txt文件")
 
-# 5. 构建和运行容器
-print("\n5. 构建和运行容器")
+# 4. 创建简单的FastAPI应用
+def create_app():
+    """创建简单的FastAPI应用"""
+    app_content = '''
+from fastapi import FastAPI
+from pydantic import BaseModel
+import joblib
+import numpy as np
 
-print("构建和运行容器的步骤:")
-print("1. 创建Dockerfile")
-print("2. 构建镜像：docker build -t myapp .")
-print("3. 运行容器：docker run -p 5000:5000 myapp")
+app = FastAPI()
 
-# 6. Docker Compose
-print("\n6. Docker Compose")
+# 加载模型（示例，实际使用时需要训练模型）
+# model = joblib.load('model.pkl')
 
-print("Docker Compose用于定义和运行多容器应用")
+class PredictionRequest(BaseModel):
+    features: list
 
-# 示例：docker-compose.yml
-print("\ndocker-compose.yml示例:")
-print("version: '3'")
-print("services:")
-print("  web:")
-print("    build: .")
-print("    ports:")
-print("      - "5000:5000"")
-print("    depends_on:")
-print("      - redis")
-print("  redis:")
-print("    image: redis:alpine")
+class PredictionResponse(BaseModel):
+    prediction: int
+    confidence: float
 
-# 7. 容器化部署
-print("\n7. 容器化部署")
+@app.post('/predict', response_model=PredictionResponse)
+def predict(request: PredictionRequest):
+    # 模拟预测
+    features = np.array(request.features).reshape(1, -1)
+    # prediction = model.predict(features)[0]
+    # confidence = model.predict_proba(features).max()
+    
+    # 模拟结果
+    prediction = 1
+    confidence = 0.95
+    
+    return PredictionResponse(
+        prediction=prediction,
+        confidence=confidence
+    )
 
-print("容器化部署的优势:")
-print("- 环境一致性")
-print("- 快速部署")
-print("- 资源隔离")
-print("- 可扩展性")
-print("- 简化管理")
+@app.get('/')
+def read_root():
+    return {"message": "AI Model API"}
+'''
+    
+    with open('app.py', 'w', encoding='utf-8') as f:
+        f.write(app_content)
+    
+    print("\n创建了app.py文件")
 
-# 8. Docker仓库
-print("\n8. Docker仓库")
+# 5. Docker Compose配置
+def create_docker_compose():
+    """创建Docker Compose配置文件"""
+    print("\n=== Docker Compose配置 ===")
+    docker_compose_content = '''
+version: '3.8'
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+'''
+    
+    with open('docker-compose.yml', 'w', encoding='utf-8') as f:
+        f.write(docker_compose_content)
+    
+    print("创建了docker-compose.yml文件")
+    print("Docker Compose内容：")
+    print(docker_compose_content)
 
-print("Docker仓库用于存储和分享镜像")
-print("- Docker Hub：公共Docker仓库")
-print("- 私有仓库：企业内部使用")
-print("- 阿里云容器镜像服务")
-print("- 腾讯云容器镜像服务")
+# 6. 多阶段构建示例
+def create_multi_stage_dockerfile():
+    """创建多阶段构建的Dockerfile"""
+    print("\n=== 多阶段构建 ===")
+    multi_stage_dockerfile = '''
+# 第一阶段：构建环境
+FROM python:3.9-slim as builder
 
-# 9. 容器编排
-print("\n9. 容器编排")
+WORKDIR /app
 
-print("容器编排用于管理多个容器")
-print("- Kubernetes (K8s)")
-print("- Docker Swarm")
-print("- Mesos")
+# 复制依赖文件
+COPY requirements.txt .
 
-# 10. 练习
-print("\n10. 练习")
+# 安装依赖到虚拟环境
+RUN python -m venv venv && \
+    venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# 练习1: 构建Docker镜像
-print("练习1: 构建Docker镜像")
-print("- 创建Dockerfile")
-print("- 构建镜像")
-print("- 运行容器")
+# 第二阶段：运行环境
+FROM python:3.9-slim
 
-# 练习2: 使用Docker Compose
-print("\n练习2: 使用Docker Compose")
-print("- 创建docker-compose.yml")
-print("- 启动多容器应用")
-print("- 停止和清理")
+WORKDIR /app
 
-# 练习3: 部署到云服务
-print("\n练习3: 部署到云服务")
-print("- 推送镜像到Docker Hub")
-print("- 在云服务上运行容器")
-print("- 配置服务")
+# 从构建阶段复制虚拟环境
+COPY --from=builder /app/venv /app/venv
 
-# 练习4: 容器编排
-print("\n练习4: 容器编排")
-print("- 学习Kubernetes基本概念")
-print("- 部署应用到Kubernetes")
-print("- 管理Kubernetes集群")
+# 复制应用代码
+COPY . .
 
-print("\n=== 第116天学习示例结束 ===")
+# 激活虚拟环境
+ENV PATH="/app/venv/bin:$PATH"
+
+# 暴露端口
+EXPOSE 8000
+
+# 运行应用
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+'''
+    
+    with open('Dockerfile.multi', 'w', encoding='utf-8') as f:
+        f.write(multi_stage_dockerfile)
+    
+    print("创建了Dockerfile.multi文件")
+    print("多阶段构建Dockerfile内容：")
+    print(multi_stage_dockerfile)
+
+# 7. 容器管理命令
+def docker_commands():
+    """Docker常用命令"""
+    print("\n=== Docker常用命令 ===")
+    commands = [
+        "docker build -t ai-model-api .",  # 构建镜像
+        "docker run -p 8000:8000 ai-model-api",  # 运行容器
+        "docker ps",  # 查看运行中的容器
+        "docker images",  # 查看镜像
+        "docker stop <container_id>",  # 停止容器
+        "docker rm <container_id>",  # 删除容器
+        "docker rmi <image_id>",  # 删除镜像
+        "docker-compose up -d",  # 使用Compose启动服务
+        "docker-compose down",  # 停止Compose服务
+        "docker logs <container_id>",  # 查看容器日志
+    ]
+    
+    for cmd in commands:
+        print(f"- {cmd}")
+
+# 8. 容器优化建议
+def docker_optimization():
+    """Docker容器优化建议"""
+    print("\n=== 容器优化建议 ===")
+    tips = [
+        "使用官方基础镜像",
+        "使用多阶段构建减小镜像体积",
+        "合理使用缓存层",
+        "避免在容器中运行不必要的服务",
+        "使用轻量级基础镜像（如alpine）",
+        "合理配置资源限制（CPU、内存）",
+        "使用健康检查确保容器状态",
+        "定期清理未使用的镜像和容器",
+    ]
+    
+    for tip in tips:
+        print(f"- {tip}")
+
+# 9. 实际操作示例
+def docker_demo():
+    """Docker操作示例"""
+    print("\n=== Docker操作示例 ===")
+    print("以下是Docker容器化的完整流程：")
+    print("1. 创建应用代码和依赖文件")
+    print("2. 编写Dockerfile")
+    print("3. 构建镜像: docker build -t ai-model-api .")
+    print("4. 运行容器: docker run -p 8000:8000 ai-model-api")
+    print("5. 访问API: http://localhost:8000")
+    print("6. 使用Docker Compose管理多容器应用")
+
+if __name__ == "__main__":
+    # 执行所有示例
+    docker_basics()
+    create_requirements()
+    create_app()
+    create_dockerfile()
+    create_docker_compose()
+    create_multi_stage_dockerfile()
+    docker_commands()
+    docker_optimization()
+    docker_demo()
+    
+    print("\n=== 学习完成 ===")
+    print("今天学习了Docker容器化的核心概念和实践应用")
+    print("掌握了Dockerfile编写、Docker Compose配置和容器管理技巧")
+    print("可以使用这些知识来容器化AI模型服务，实现更高效的部署和管理")
